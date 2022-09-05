@@ -1,0 +1,7 @@
+PyInquirer
+rich
+requests
+beautifulsoup4
+pyyaml
+feedparser
+git+https://github.com/anime-dl/anime-downloader.git
