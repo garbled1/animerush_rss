@@ -39,7 +39,7 @@ class AnimeRushRSS:
 
     def load_rss(self):
         self.rss = feedparser.parse(self.url)
-        if 'AnimeRush' in self.rss.feed.title:
+        if 'title' in self.rss.feed and 'AnimeRush' in self.rss.feed.title:
             return True
         return False
 
