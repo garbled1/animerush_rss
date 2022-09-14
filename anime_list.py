@@ -163,6 +163,29 @@ def parse_config(conf_f):
     return None
 
 
+def fix_config(current_anime, conf_f):
+    """Apply any fixes to the config file"""
+
+    changed = False
+    # add season offset
+    for anime in current_anime['monitored']:
+        if 'season_offset' in anime:
+            continue
+        if not anime['monitored']:
+            continue
+        anime['season_offset'] = 0
+        changed = True
+
+    # all fixes applied, save config
+    if changed:
+        with open(conf_f, 'w') as file:
+            yaml.dump(current_anime, file)
+        print('[green]Applied fixes to config file ' + conf_f)
+
+    # return config in case we changed it
+    return current_anime
+
+
 def find_anime_in_monitored_list(anime_name, mlist):
     """Return the dict of the monitored anime if any."""
     for a in mlist:
@@ -255,10 +278,19 @@ def pick_anime(current_anime, directory):
                 'validate': NumberValidator,
                 'filter': lambda val: int(val),
             },
+            {
+                'type': 'input',
+                'name': 'season_offset',
+                'message': 'Season episode offset (normally 0)',
+                'validate': NumberValidator,
+                'filter': lambda val: int(val),
+                'default': 0,
+            },
         ]
         a_details = prompt(q_details)
         new_entry['name'] = a_details['dirname']
         new_entry['season'] = a_details['season']
+        new_entry['season_offset'] = a_details['season_offset']
         new_entry['url'] = anime['url']
         current_anime['monitored'].append(new_entry)
 
@@ -366,6 +398,7 @@ def parse_rss(config):
         if not monitored:
             continue
         anime = find_anime_in_monitored_list(show, config['monitored'])
+        ep_num = ep_num + anime['season_offset']
         basedir = config['base_directory'] + '/' + gen_basedir(anime)
         create_tree(config, anime)
         if not have_episode(anime, ep_num, basedir):
@@ -407,16 +440,17 @@ def catch_up_all_anime(config, ask):
         adl = AnimeRush(anime['url'], quality=config['quality'],
                         fallback_qualities=config['fallback_qualities'])
         for ep in adl:
-            if have_episode(anime, ep.ep_no, basedir):
+            ep_num = int(ep.ep_no) + anime['season_offset']
+            if have_episode(anime, ep_num, basedir):
                 continue
-            print("[red]Missing Episode {} of {}".format(ep.ep_no,
+            print("[red]Missing Episode {} of {}".format(str(ep_num),
                                                          anime['full_name']))
-            fullpath = gen_fullname(anime, config['base_directory'], ep.ep_no)
+            fullpath = gen_fullname(anime, config['base_directory'], ep_num)
 
             if ask:
                 answer = prompt(q_download)
                 if answer['doit']:
-                    print("[bold green]Downloading episode {} of {}".format(ep.ep_no, anime['full_name']))
+                    print("[bold green]Downloading episode {} of {}".format(str(ep_num), anime['full_name']))
                     try:
                         ep.download(path=fullpath)
                     except a_exceptions.NotFoundError:
@@ -425,7 +459,7 @@ def catch_up_all_anime(config, ask):
                         if e.code > 400:
                             print("[bold red]Download error! {}".format(str(e.code)))
             else:
-                print("[bold green]Downloading episode {} of {}".format(ep.ep_no, anime['full_name']))
+                print("[bold green]Downloading episode {} of {}".format(str(ep_num), anime['full_name']))
                 try:
                     ep.download(path=fullpath)
                 except a_exceptions.NotFoundError:
@@ -469,17 +503,18 @@ def catch_up_single_anime(config, ask):
     adl = AnimeRush(anime['url'], quality=config['quality'],
                     fallback_qualities=config['fallback_qualities'])
     for ep in adl:
-        if have_episode(anime, ep.ep_no, basedir):
+        ep_num = int(ep.ep_no) + anime['season_offset']
+        if have_episode(anime, ep_num, basedir):
             continue
-        print("[red]Missing Episode {} of {}".format(ep.ep_no,
+        print("[red]Missing Episode {} of {}".format(str(ep_num),
                                                      anime['full_name']))
-        fullpath = gen_fullname(anime, config['base_directory'], ep.ep_no)
+        fullpath = gen_fullname(anime, config['base_directory'], ep_num)
         fullsdir = basedir + '/' + gen_seasondir(anime) + '/'
 
         if ask:
             answer = prompt(q_download)
             if answer['doit']:
-                print("[bold green]Downloading episode {} of {}".format(ep.ep_no, anime['full_name']))
+                print("[bold green]Downloading episode {} of {}".format(str(ep_num), anime['full_name']))
                 # external_download('{aria2}',
                 #                   ep,
                 #                   gen_epname(anime, ep.ep_no),
@@ -494,7 +529,7 @@ def catch_up_single_anime(config, ask):
                         print("[bold red]Download error! {}".format(str(e.code)))
 
         else:
-            print("[bold green]Downloading episode {} of {}".format(ep.ep_no, anime['full_name']))
+            print("[bold green]Downloading episode {} of {}".format(str(ep_num), anime['full_name']))
             try:
                 ep.download(path=fullpath)
             except a_exceptions.NotFoundError:
@@ -511,6 +546,9 @@ def main():
     if config is None and not args.pick_anime:
         print('[red]No Config file found, create one with -p option')
         exit(1)
+
+    if not args.pick_anime:
+        config = fix_config(config, args.conffile)
 
     if args.new_anime_check:
         have_new = new_anime_check(config)
