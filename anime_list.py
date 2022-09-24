@@ -284,7 +284,7 @@ def pick_anime(current_anime, directory):
                 'message': 'Season episode offset (normally 0)',
                 'validate': NumberValidator,
                 'filter': lambda val: int(val),
-                'default': 0,
+                'default': '0',
             },
         ]
         a_details = prompt(q_details)
