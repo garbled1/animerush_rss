@@ -50,7 +50,7 @@ class AnimeRushRSS:
 
     def ep_num(self, episode):
         """Return the episode number only"""
-        return int(re.sub(re.compile('.* episode *'), '', episode.title))
+        return re.sub(re.compile('.* episode *'), '', episode.title)
 
     def get_entries(self):
         """Just return the entries list"""
@@ -398,7 +398,10 @@ def parse_rss(config):
         if not monitored:
             continue
         anime = find_anime_in_monitored_list(show, config['monitored'])
-        ep_num = ep_num + anime['season_offset']
+        # don't be clever for specials
+        if isinstance(ep_num, int):
+            ep_num = int(ep_num) + anime['season_offset']
+            
         basedir = config['base_directory'] + '/' + gen_basedir(anime)
         create_tree(config, anime)
         if not have_episode(anime, ep_num, basedir):
