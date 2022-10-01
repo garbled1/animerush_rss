@@ -400,7 +400,7 @@ def parse_rss(config):
         anime = find_anime_in_monitored_list(show, config['monitored'])
 
         # don't break specials
-        if isinstance(ep_num, int):
+        if ep_num.isdigit():
             ep_num = int(ep_num) + anime['season_offset']
         else:
             part = ep_num.split('.')
