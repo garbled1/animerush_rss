@@ -394,6 +394,7 @@ def parse_rss(config):
     for e in entries:
         show = rss.show_name(e)
         ep_num = rss.ep_num(e)
+        orig_num = rss.ep_num(e)
         monitored = is_monitored(config, show)
         if not monitored:
             continue
@@ -413,7 +414,7 @@ def parse_rss(config):
             try:
                 adl = AnimeRush(anime['url'], quality=config['quality'],
                                 fallback_qualities=config['fallback_qualities'])
-                adl_e = AnimeRushEpisode(e.link, parent=adl, ep_no=ep_num)
+                adl_e = AnimeRushEpisode(e.link, parent=adl, ep_no=orig_num)
             except IndexError:
                 continue
             try:
