@@ -398,9 +398,13 @@ def parse_rss(config):
         if not monitored:
             continue
         anime = find_anime_in_monitored_list(show, config['monitored'])
-        # don't be clever for specials
+
+        # don't break specials
         if isinstance(ep_num, int):
             ep_num = int(ep_num) + anime['season_offset']
+        else:
+            part = ep_num.split('.')
+            ep_num = str(int(part[0]) + anime['season_offset']) + '.' + part[1]
             
         basedir = config['base_directory'] + '/' + gen_basedir(anime)
         create_tree(config, anime)
