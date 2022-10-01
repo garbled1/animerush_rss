@@ -444,8 +444,11 @@ def catch_up_all_anime(config, ask):
             continue
         print("[yellow]Looking for missing episodes of " + anime['full_name'])
         basedir = config['base_directory'] + '/' + gen_basedir(anime)
-        adl = AnimeRush(anime['url'], quality=config['quality'],
-                        fallback_qualities=config['fallback_qualities'])
+        try:
+            adl = AnimeRush(anime['url'], quality=config['quality'],
+                            fallback_qualities=config['fallback_qualities'])
+        except IndexError:
+            adl = []
         for ep in adl:
             ep_num = int(ep.ep_no) + anime['season_offset']
             if have_episode(anime, ep_num, basedir):
@@ -507,8 +510,12 @@ def catch_up_single_anime(config, ask):
     anime = find_anime_in_monitored_list(a_which['selected'], config['monitored'])
     print("[yellow]Looking for missing episodes of " + anime['full_name'])
     basedir = config['base_directory'] + '/' + gen_basedir(anime)
-    adl = AnimeRush(anime['url'], quality=config['quality'],
-                    fallback_qualities=config['fallback_qualities'])
+    try:
+        adl = AnimeRush(anime['url'], quality=config['quality'],
+                        fallback_qualities=config['fallback_qualities'])
+    except IndexError:
+            adl = []
+
     for ep in adl:
         ep_num = int(ep.ep_no) + anime['season_offset']
         if have_episode(anime, ep_num, basedir):
