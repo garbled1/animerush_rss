@@ -410,9 +410,12 @@ def parse_rss(config):
         create_tree(config, anime)
         if not have_episode(anime, ep_num, basedir):
             print("Episode {} of {} missing, downloading".format(str(ep_num), show))
-            adl = AnimeRush(anime['url'], quality=config['quality'],
-                            fallback_qualities=config['fallback_qualities'])
-            adl_e = AnimeRushEpisode(e.link, parent=adl, ep_no=ep_num)
+            try:
+                adl = AnimeRush(anime['url'], quality=config['quality'],
+                                fallback_qualities=config['fallback_qualities'])
+                adl_e = AnimeRushEpisode(e.link, parent=adl, ep_no=ep_num)
+            except IndexError:
+                continue
             try:
                 adl_e.download(path=gen_fullname(anime, config['base_directory'],
                                                  ep_num))
